@@ -1,4 +1,4 @@
-# React by TS projects
+# React use TS projects
 
 This is some projects that I learned from some video on Youtube:
 
