@@ -1,32 +1,54 @@
 import { useState } from "react";
 
-type SelectOption = {
+export type SelectOption = {
   label: string;
   value: string | number;
 };
 
-type SelectProps = {
-  options: SelectOption[];
-  value: SelectOption | undefined;
+type MultipleSelectProps = {
+  multiple: true;
+  value: SelectOption[];
+  onChange: (value: SelectOption[]) => void;
+};
+
+type SingleSelectProps = {
+  multiple?: false;
+  value?: SelectOption;
   onChange: (value: SelectOption | undefined) => void;
 };
 
-const Select = ({ value, onChange, options }: SelectProps) => {
+type SelectProps = {
+  options: SelectOption[];
+} & (SingleSelectProps | MultipleSelectProps);
+
+const Select = ({ multiple, value, onChange, options }: SelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
   const clearOption = () => {
-    onChange(undefined);
+    if (multiple) {
+      onChange([]);
+    } else {
+      onChange(undefined);
+    }
   };
 
   const selectOption = (option: SelectOption) => {
-    if (option !== value) {
-      onChange(option);
+    if (multiple) {
+      if (value.includes(option)) {
+        onChange(value.filter((o) => o !== option));
+      } else {
+        onChange([...value, option]);
+      }
+    } else {
+      if (option !== value) {
+        onChange(option);
+      }
     }
   };
 
   const isOptionSelected = (option: SelectOption) => {
-    return option === value;
+    return multiple ? value.includes(option) : option === value;
   };
 
   const toggleDropdown = () => {
@@ -45,7 +67,23 @@ const Select = ({ value, onChange, options }: SelectProps) => {
       onClick={toggleDropdown}
       onBlur={() => setIsOpen(false)}
     >
-      <span className="grow">{value?.label}</span>
+      <span className="grow flex gap-[.5em] flex-wrap">
+        {multiple
+          ? value.map((v) => (
+              <button
+                key={v.value}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectOption(v);
+                }}
+                className=""
+              >
+                {v.label}
+                <span className="">&times;</span>
+              </button>
+            ))
+          : value?.label}
+      </span>
 
       <button
         type="button"
