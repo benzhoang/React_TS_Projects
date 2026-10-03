@@ -1,45 +1,66 @@
 import { useState } from "react";
 
-type SelectOptions = {
+type SelectOption = {
   label: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any;
+  value: string | number;
 };
 
 type SelectProps = {
-  options: SelectOptions[];
-  value: SelectOptions;
-  onChange: (value: SelectOptions | undefined) => void;
+  options: SelectOption[];
+  value: SelectOption | undefined;
+  onChange: (value: SelectOption | undefined) => void;
 };
 
 const Select = ({ value, onChange, options }: SelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [highlightedOption, setHighlightedOption] = useState<
-    SelectOptions | undefined
-  >();
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+
+  const clearOption = () => {
+    onChange(undefined);
+  };
+
+  const selectOption = (option: SelectOption) => {
+    if (option !== value) {
+      onChange(option);
+    }
+  };
+
+  const isOptionSelected = (option: SelectOption) => {
+    return option === value;
+  };
+
+  const toggleDropdown = () => {
+    // Khi mở dropdown thì reset highlightedIndex về option đầu tiên
+    if (!isOpen) {
+      setHighlightedIndex(0);
+    }
+
+    setIsOpen((prev) => !prev);
+  };
 
   return (
     <div
       tabIndex={0}
-      className="relative w-[20em] min-h-[1.5em] border-solid border-[0.05em] border-gray-500 rounded-[.25em] flex items-center gap-[.5em] p-[.5em] outline-none focus:border-blue-500 ml-2"
-      onClick={() => setIsOpen((prev) => !prev)}
+      className="relative w-[20em] min-h-[1.5em] border-solid border-[0.05em] border-gray-500 rounded-[.25em] flex items-center gap-[.5em] p-[.5em] outline-none focus:border-blue-500 ml-4 mt-4"
+      onClick={toggleDropdown}
+      onBlur={() => setIsOpen(false)}
     >
-      <span className="grow">{value?.label || "Value"}</span>
+      <span className="grow">{value?.label}</span>
 
       <button
         type="button"
         className="bg-transparent border-none outline-none cursor-pointer p-0 text-[1.5em] focus:text-black hover:text-black"
         onClick={(e) => {
           e.stopPropagation();
-          onChange(undefined);
+          clearOption();
         }}
       >
         &times;
       </button>
 
-      <div className="bg-gray-200 self-stretch w-[.05em]"></div>
+      <div className="bg-gray-200 self-stretch w-[0.05em]" />
 
-      <div className="border-[.25em] border-solid border-transparent border-t-gray-300 translate-x-0 translate-y-[25%]"></div>
+      <div className="border-[0.25em] border-solid border-transparent border-t-gray-300 translate-x-0 translate-y-[25%]" />
 
       <ul
         className={`
@@ -49,10 +70,10 @@ const Select = ({ value, onChange, options }: SelectProps) => {
           list-none
           max-h-[15em]
           overflow-y-auto
-          border-[.05em]
+          border-[0.05em]
           border-solid
           border-[#777]
-          rounded-[.25em]
+          rounded-[0.25em]
           w-full
           left-0
           top-[calc(100%+.25em)]
@@ -61,28 +82,25 @@ const Select = ({ value, onChange, options }: SelectProps) => {
           ${isOpen ? "block" : "hidden"}
         `}
       >
-        {options.map((option) => (
+        {options.map((option, index) => (
           <li
-            key={option.label}
+            key={option.value}
             className={`
-              px-[.25em]
-              py-[.5em]
+              px-[0.25em]
+              py-[0.5em]
               cursor-pointer
-
               ${
-                option.label === highlightedOption?.label
+                index === highlightedIndex
                   ? "bg-[hsl(200,100%,50%)] text-white"
                   : ""
               }
-
-              ${option.label === value?.label ? "bg-[hsl(200,100%,70%)]" : ""}
+              ${isOptionSelected(option) ? "bg-[hsl(200,100%,70%)]" : ""}
             `}
-            onMouseEnter={() => setHighlightedOption(option)}
+            onMouseEnter={() => setHighlightedIndex(index)}
             onClick={(e) => {
               e.stopPropagation();
-              onChange(option);
+              selectOption(option);
               setIsOpen(false);
-              setHighlightedOption(undefined);
             }}
           >
             {option.label}
