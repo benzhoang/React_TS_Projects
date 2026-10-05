@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type SelectOption = {
   label: string;
@@ -24,6 +24,7 @@ type SelectProps = {
 const Select = ({ multiple, value, onChange, options }: SelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const clearOption = () => {
     if (multiple) {
@@ -60,12 +61,84 @@ const Select = ({ multiple, value, onChange, options }: SelectProps) => {
     setIsOpen((prev) => !prev);
   };
 
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) return;
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.target !== container) return;
+
+      switch (e.code) {
+        case "Enter":
+        case "Space": {
+          e.preventDefault();
+
+          if (!isOpen) {
+            setIsOpen(true);
+            return;
+          }
+
+          const option = options[highlightedIndex];
+
+          if (option) {
+            selectOption(option);
+            setIsOpen(false);
+          }
+
+          break;
+        }
+
+        case "ArrowDown": {
+          e.preventDefault();
+
+          if (!isOpen) {
+            setIsOpen(true);
+            return;
+          }
+
+          setHighlightedIndex((prev) =>
+            prev < options.length - 1 ? prev + 1 : prev,
+          );
+
+          break;
+        }
+
+        case "ArrowUp": {
+          e.preventDefault();
+
+          if (!isOpen) {
+            setIsOpen(true);
+            return;
+          }
+
+          setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+
+          break;
+        }
+
+        case "Escape": {
+          e.preventDefault();
+          setIsOpen(false);
+          break;
+        }
+      }
+    };
+
+    container.addEventListener("keydown", handler);
+
+    return () => {
+      container.removeEventListener("keydown", handler);
+    };
+  }, [isOpen, highlightedIndex, options]);
+
   return (
     <div
       tabIndex={0}
       className="relative w-[20em] min-h-[1.5em] border-solid border-[0.05em] border-gray-500 rounded-[.25em] flex items-center gap-[.5em] p-[.5em] outline-none focus:border-blue-500 ml-4 mt-4"
       onClick={toggleDropdown}
       onBlur={() => setIsOpen(false)}
+      ref={containerRef}
     >
       <span className="grow flex gap-[.5em] flex-wrap">
         {multiple
@@ -76,10 +149,12 @@ const Select = ({ multiple, value, onChange, options }: SelectProps) => {
                   e.stopPropagation();
                   selectOption(v);
                 }}
-                className=""
+                className="flex items-center border-[.05em] border-solid border-gray-500 rounded-[.25em] gap-[.25em] cursor-pointer bg-none outline-none p-[0.25em] hover:bg-[hsl(0,100%,90%)] hover:border-[hsl(0,100%,50%)focus:bg-[hsl(0,100%,90%)] focus:border-[hsl(0,100%,50%)]"
               >
                 {v.label}
-                <span className="">&times;</span>
+                <span className="text-[1.25em] text-[#777] group-hover:text-[hsl(0,100%,50%)] group-focus:text-[hsl(0,100%,50%)]">
+                  &times;
+                </span>
               </button>
             ))
           : value?.label}
